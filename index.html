@@ -1,1 +1,80 @@
-<h1>Welcome to Our Memories</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase File Upload</title>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.5.0/firebase-storage.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.5.0/firebase-analytics.js"></script>
+</head>
+<body>
+  <h1>Upload Your Memory!</h1>
+
+  <!-- File input for selecting files to upload -->
+  <input type="file" id="fileInput" />
+
+  <!-- Preview of the uploaded file will be displayed here -->
+  <div id="preview"></div>
+
+  <script type="module">
+    // Firebase configuration object (replace with your actual Firebase config)
+    const firebaseConfig = {
+      apiKey: "your-api-key",
+      authDomain: "your-project-id.firebaseapp.com",
+      projectId: "your-project-id",
+      storageBucket: "your-project-id.appspot.com",
+      messagingSenderId: "your-sender-id",
+      appId: "your-app-id",
+      measurementId: "your-measurement-id"
+    };
+
+    // Initialize Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-storage.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-analytics.js";
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const storage = getStorage(app);
+
+    // Function to handle file upload to Firebase
+    function uploadFile(file) {
+      const storageRef = ref(storage, 'memories/' + file.name); // Specify path in Firebase Storage
+      uploadBytes(storageRef, file).then((snapshot) => {
+        console.log('File uploaded successfully!');
+        getDownloadURL(snapshot.ref).then((downloadURL) => {
+          console.log('File available at', downloadURL);
+
+          // Display the uploaded file (image or video)
+          let element;
+          if (file.type.startsWith('image')) {
+            element = document.createElement('img');
+            element.src = downloadURL;
+            element.style.maxWidth = '200px';
+            element.style.objectFit = 'cover';
+            document.getElementById('preview').appendChild(element);
+          } else if (file.type.startsWith('video')) {
+            element = document.createElement('video');
+            element.src = downloadURL;
+            element.controls = true;
+            element.style.maxWidth = '200px';
+            document.getElementById('preview').appendChild(element);
+          }
+        });
+      }).catch((error) => {
+        console.log(error);
+      });
+    }
+
+    // Event listener for file selection
+    document.getElementById("fileInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        uploadFile(file);
+      }
+    });
+  </script>
+</body>
+</html>
