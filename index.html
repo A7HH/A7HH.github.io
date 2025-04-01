@@ -1,135 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upload Your Memories</title>
-
-  <!-- Firebase SDKs -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-storage.js";
-
-    // Your Firebase Configuration
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const storage = getStorage(app);
-
-    // Function to handle file upload
-    function uploadFile(file) {
-      const storageRef = ref(storage, `memories/${file.name}`); // Save file in "memories" folder
-
-      uploadBytes(storageRef, file).then((snapshot) => {
-        console.log("File uploaded successfully!");
-
-        // Get the file's URL after upload
-        getDownloadURL(snapshot.ref).then((downloadURL) => {
-          console.log("File available at", downloadURL);
-          displayFile(file, downloadURL);
-        });
-      }).catch((error) => {
-        console.error("Upload failed:", error);
-      });
-    }
-
-    // Function to display uploaded file
-    function displayFile(file, url) {
-      let previewDiv = document.getElementById("preview");
-      let element;
-
-      if (file.type.startsWith("image")) {
-        element = document.createElement("img");
-        element.src = url;
-      } else if (file.type.startsWith("video")) {
-        element = document.createElement("video");
-        element.src = url;
-        element.controls = true;
-      } else {
-        element = document.createElement("a");
-        element.href = url;
-        element.textContent = "View File";
-        element.target = "_blank";
-      }
-
-      element.style.maxWidth = "200px";
-      element.style.margin = "10px";
-      previewDiv.appendChild(element);
-    }
-
-    // Event Listener for File Input
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("fileInput").addEventListener("change", (event) => {
-        const file = event.target.files[0];
-        if (file) {
-          uploadFile(file);
-        }
-      });
-    });
-  </script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f2f2f2;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Your Memories</title>
     
-    .container {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      text-align: center;
-      width: 100%;
-      max-width: 600px;
-    }
+    <!-- Google API -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js"></script>
 
-    h1 { color: #4CAF50; }
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
 
-    .upload-btn {
-      background-color: #4CAF50;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: inline-block;
+        }
 
-    #preview {
-      margin-top: 20px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
+        .upload-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
 
-    #preview img, #preview video {
-      max-width: 200px;
-      max-height: 200px;
-      border-radius: 8px;
-      margin: 10px;
-    }
-
-    .file-input { display: none; }
-  </style>
+        #preview a {
+            display: block;
+            margin-top: 10px;
+            color: #007BFF;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Upload Your Memory!</h1>
-    <label for="fileInput" class="upload-btn">Choose File to Upload</label>
-    <input type="file" id="fileInput" class="file-input" />
-    <div id="preview"></div>
-  </div>
+    <div class="container">
+        <h1>Upload Your Memory!</h1>
+
+        <!-- Google Sign-In Button -->
+        <div id="g_id_onload"
+            data-client_id="YOUR_CLIENT_ID"
+            data-callback="handleCredentialResponse">
+        </div>
+        <div class="g_id_signin" data-type="standard"></div>
+
+        <br><br>
+
+        <div id="upload-section" style="display: none;">
+            <input type="file" id="fileInput">
+            <button class="upload-btn" onclick="uploadFile()">Upload Memory</button>
+        </div>
+
+        <h2>Your Memories</h2>
+        <div id="preview"></div>
+    </div>
+
+    <script>
+        let accessToken = "";
+
+        function handleCredentialResponse(response) {
+            console.log("Google Token:", response.credential);
+            authenticateWithGoogle(response.credential);
+        }
+
+        function authenticateWithGoogle(token) {
+            fetch("https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=" + token)
+            .then(response => response.json())
+            .then(data => {
+                console.log("User Info:", data);
+                document.getElementById("upload-section").style.display = "block";
+
+                // Get Access Token
+                gapi.load("auth2", () => {
+                    gapi.auth2.init().then(() => {
+                        gapi.auth2.getAuthInstance().signIn().then(googleUser => {
+                            accessToken = googleUser.getAuthResponse().access_token;
+                            fetchFileList(); // Load files on sign-in
+                        });
+                    });
+                });
+            })
+            .catch(error => console.error("Error authenticating:", error));
+        }
+
+        function uploadFile() {
+            const fileInput = document.getElementById("fileInput").files[0];
+            if (!fileInput) {
+                alert("Please select a file!");
+                return;
+            }
+
+            const metadata = {
+                name: fileInput.name,
+                mimeType: fileInput.type
+            };
+
+            const formData = new FormData();
+            formData.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+            formData.append("file", fileInput);
+
+            fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+                method: "POST",
+                headers: new Headers({ "Authorization": "Bearer " + accessToken }),
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("File Uploaded:", data);
+                fetchFileList(); // Reload file list
+            })
+            .catch(error => console.error("Upload Error:", error));
+        }
+
+        function fetchFileList() {
+            fetch("https://www.googleapis.com/drive/v3/files", {
+                headers: new Headers({ "Authorization": "Bearer " + accessToken })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("preview").innerHTML = "";
+                data.files.forEach(file => {
+                    let fileLink = document.createElement("a");
+                    fileLink.href = `https://drive.google.com/uc?id=${file.id}`;
+                    fileLink.textContent = file.name;
+                    fileLink.target = "_blank";
+                    document.getElementById("preview").appendChild(fileLink);
+                });
+            })
+            .catch(error => console.error("Error Fetching Files:", error));
+        }
+    </script>
 </body>
 </html>
