@@ -67,6 +67,10 @@
             transform: translateY(-50%);
             z-index: 10;
         }
+
+        .scroll-left { left: 5px; }
+        .scroll-right { right: 5px; }
+
     </style>
 </head>
 <body>
@@ -77,23 +81,23 @@
 
         <h2>Photos</h2>
         <div style="position: relative;">
-            <button class="scroll-btn" style="left: 5px;" onclick="scrollLeft('photos')">◀</button>
+            <button class="scroll-btn scroll-left" onclick="scrollLeft('photos')">◀</button>
             <div id="photos" class="memory-container"></div>
-            <button class="scroll-btn" style="right: 5px;" onclick="scrollRight('photos')">▶</button>
+            <button class="scroll-btn scroll-right" onclick="scrollRight('photos')">▶</button>
         </div>
 
         <h2>Videos</h2>
         <div style="position: relative;">
-            <button class="scroll-btn" style="left: 5px;" onclick="scrollLeft('videos')">◀</button>
+            <button class="scroll-btn scroll-left" onclick="scrollLeft('videos')">◀</button>
             <div id="videos" class="memory-container"></div>
-            <button class="scroll-btn" style="right: 5px;" onclick="scrollRight('videos')">▶</button>
+            <button class="scroll-btn scroll-right" onclick="scrollRight('videos')">▶</button>
         </div>
 
         <h2>Audio</h2>
         <div style="position: relative;">
-            <button class="scroll-btn" style="left: 5px;" onclick="scrollLeft('audio')">◀</button>
+            <button class="scroll-btn scroll-left" onclick="scrollLeft('audio')">◀</button>
             <div id="audio" class="memory-container"></div>
-            <button class="scroll-btn" style="right: 5px;" onclick="scrollRight('audio')">▶</button>
+            <button class="scroll-btn scroll-right" onclick="scrollRight('audio')">▶</button>
         </div>
     </div>
 
@@ -115,8 +119,18 @@
                 body: formData
             })
             .then(response => response.json())
-            .then(data => { fetchFileList(); })
-            .catch(error => console.error("Upload Error:", error));
+            .then(data => { 
+                if (data.id) {
+                    alert('Upload Successful!');
+                    fetchFileList(); 
+                } else {
+                    alert('Upload Failed!');
+                }
+            })
+            .catch(error => {
+                console.error("Upload Error:", error);
+                alert('An error occurred while uploading!');
+            });
         }
 
         function fetchFileList() {
@@ -128,7 +142,7 @@
                 document.getElementById("photos").innerHTML = "";
                 document.getElementById("videos").innerHTML = "";
                 document.getElementById("audio").innerHTML = "";
-                
+
                 data.files.forEach(file => {
                     let fileType = file.name.split('.').pop().toLowerCase();
                     let fileUrl = `https://drive.google.com/uc?id=${file.id}`;
@@ -147,6 +161,14 @@
                 });
             })
             .catch(error => console.error("Error Fetching Files:", error));
+        }
+
+        function scrollLeft(id) {
+            document.getElementById(id).scrollBy({ left: -200, behavior: 'smooth' });
+        }
+
+        function scrollRight(id) {
+            document.getElementById(id).scrollBy({ left: 200, behavior: 'smooth' });
         }
     </script>
 </body>
