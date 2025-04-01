@@ -3,22 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Memory Website</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Memory Upload</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js" defer></script>
 </head>
 <body>
-  <h1>Welcome to Our Memory Website!</h1>
+  <div class="container">
+    <header>
+      <h1>Memory Lane</h1>
+      <p>Upload and share your favorite memories.</p>
+    </header>
 
-  <!-- Memory input section -->
-  <div>
-    <input type="file" id="fileInput" />
-    <textarea id="noteInput" placeholder="Add a note"></textarea>
-    <button onclick="uploadMemory()">Upload Memory</button>
+    <section class="upload-section">
+      <div class="input-group">
+        <input type="file" id="fileInput" class="file-input" />
+        <textarea id="noteInput" class="note-input" placeholder="Write a note about your memory..."></textarea>
+      </div>
+      <button id="uploadButton" class="upload-button">Upload Memory</button>
+    </section>
+
+    <section id="memoryContainer" class="memory-container">
+      <!-- Memories will be displayed here -->
+    </section>
   </div>
-
-  <!-- Display memories -->
-  <div id="memoryContainer"></div>
-
-  <script type="module" src="app.js"></script>
 </body>
 </html>
