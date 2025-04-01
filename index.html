@@ -6,8 +6,8 @@
     <title>Upload Your Memories</title>
     
     <!-- Google API -->
-    <script src="https://apis.google.com/js/api.js" async defer></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js"></script>
 
     <style>
         body {
@@ -98,38 +98,37 @@
     </div>
 
     <script>
+        let apiKey = "AIzaSyCrFx1RUDumabxURGpqPJ0c-AVAqAT42Pw";
+        let clientId = "584324002833-0usenajkp6l70gl72hm72pag4r0mbm0b.apps.googleusercontent.com";
         let accessToken = "";
 
-        // Initialize Google API Client
-        function handleClientLoad() {
-            gapi.load("client:auth2", initClient);
-        }
-
-        function initClient() {
-            gapi.client.init({
-                apiKey: 'YOUR_API_KEY',  // Replace with your API key
-                clientId: 'YOUR_CLIENT_ID',  // Replace with your OAuth 2.0 client ID
-                scope: 'https://www.googleapis.com/auth/drive.file',
-            }).then(function () {
-                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-                updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+        // Google Sign-In for API access
+        function handleAuthClick() {
+            gapi.auth2.getAuthInstance().signIn().then(() => {
+                accessToken = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
+                fetchFileList(); // Fetch the list after successful login
             });
         }
 
-        function updateSigninStatus(isSignedIn) {
-            if (isSignedIn) {
-                const user = gapi.auth2.getAuthInstance().currentUser.get();
-                accessToken = user.getAuthResponse().access_token; // Store the access token
-                console.log("Access Token: " + accessToken);
-            } else {
-                gapi.auth2.getAuthInstance().signIn();
-            }
+        // Load Google API client
+        function initClient() {
+            gapi.client.init({
+                apiKey: apiKey,
+                clientId: clientId,
+                scope: "https://www.googleapis.com/auth/drive.file",
+                discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]
+            }).then(() => {
+                // Listen for sign-in state changes.
+                gapi.auth2.getAuthInstance().isSignedIn.listen(handleAuthClick);
+                // Handle initial sign-in state.
+                if (gapi.auth2.getAuthInstance().isSignedIn.get()) {
+                    handleAuthClick();
+                }
+            });
         }
 
-        // Call this function to initialize the client
-        handleClientLoad();
+        gapi.load("client:auth2", initClient);
 
-        // Upload file to Google Drive
         function uploadFile() {
             const fileInput = document.getElementById("fileInput").files[0];
             if (!fileInput) return alert("Please select a file!");
@@ -145,17 +144,10 @@
                 body: formData
             })
             .then(response => response.json())
-            .then(data => {
-                console.log("File uploaded successfully:", data);
-                fetchFileList(); // Fetch the updated file list after uploading
-            })
-            .catch(error => {
-                console.error("Upload Error:", error);
-                alert('An error occurred while uploading!');
-            });
+            .then(data => { fetchFileList(); })
+            .catch(error => console.error("Upload Error:", error));
         }
 
-        // Fetch and display files from Google Drive
         function fetchFileList() {
             fetch("https://www.googleapis.com/drive/v3/files", {
                 headers: { "Authorization": "Bearer " + accessToken }
@@ -186,7 +178,6 @@
             .catch(error => console.error("Error Fetching Files:", error));
         }
 
-        // Scroll functions for photo, video, and audio containers
         function scrollLeft(id) {
             document.getElementById(id).scrollBy({ left: -200, behavior: 'smooth' });
         }
