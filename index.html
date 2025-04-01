@@ -30,7 +30,7 @@
         }
 
         .upload-btn {
-            background: linear-gradient(45deg, #ff9800, #ff5722);
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
             color: white;
             padding: 12px 24px;
             border: none;
@@ -38,6 +38,11 @@
             cursor: pointer;
             font-size: 16px;
             margin-bottom: 20px;
+            transition: background 0.3s ease;
+        }
+
+        .upload-btn:hover {
+            background: linear-gradient(45deg, #0072ff, #00c6ff);
         }
 
         .memory-container {
@@ -66,6 +71,15 @@
             top: 50%;
             transform: translateY(-50%);
             z-index: 10;
+            transition: background 0.3s ease;
+        }
+
+        .scroll-btn:hover {
+            background: linear-gradient(45deg, #ff5722, #ff9800);
+        }
+
+        .scroll-btn:focus {
+            outline: none;
         }
     </style>
 </head>
@@ -107,7 +121,7 @@
             gapi.auth2.getAuthInstance().signIn().then(() => {
                 accessToken = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
                 fetchFileList(); // Fetch the list after successful login
-            });
+            }).catch(error => console.error("Error during sign-in: ", error));
         }
 
         // Load Google API client
@@ -124,7 +138,7 @@
                 if (gapi.auth2.getAuthInstance().isSignedIn.get()) {
                     handleAuthClick();
                 }
-            });
+            }).catch(error => console.error("Error initializing Google API client: ", error));
         }
 
         gapi.load("client:auth2", initClient);
@@ -179,10 +193,11 @@
         }
 
         function scrollLeft(id) {
-            document.getElementById(id).scrollBy({ left: -200, behavior: 'smooth' });
+            document.getElementById(id).scrollBy({ left: -200, behavior: "smooth" });
         }
+
         function scrollRight(id) {
-            document.getElementById(id).scrollBy({ left: 200, behavior: 'smooth' });
+            document.getElementById(id).scrollBy({ left: 200, behavior: "smooth" });
         }
     </script>
 </body>
