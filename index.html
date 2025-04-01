@@ -6,8 +6,8 @@
     <title>Upload Your Memories</title>
     
     <!-- Google API -->
+    <script src="https://apis.google.com/js/api.js" async defer></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://apis.google.com/js/api.js"></script>
 
     <style>
         body {
@@ -67,10 +67,6 @@
             transform: translateY(-50%);
             z-index: 10;
         }
-
-        .scroll-left { left: 5px; }
-        .scroll-right { right: 5px; }
-
     </style>
 </head>
 <body>
@@ -81,29 +77,59 @@
 
         <h2>Photos</h2>
         <div style="position: relative;">
-            <button class="scroll-btn scroll-left" onclick="scrollLeft('photos')">◀</button>
+            <button class="scroll-btn" style="left: 5px;" onclick="scrollLeft('photos')">◀</button>
             <div id="photos" class="memory-container"></div>
-            <button class="scroll-btn scroll-right" onclick="scrollRight('photos')">▶</button>
+            <button class="scroll-btn" style="right: 5px;" onclick="scrollRight('photos')">▶</button>
         </div>
 
         <h2>Videos</h2>
         <div style="position: relative;">
-            <button class="scroll-btn scroll-left" onclick="scrollLeft('videos')">◀</button>
+            <button class="scroll-btn" style="left: 5px;" onclick="scrollLeft('videos')">◀</button>
             <div id="videos" class="memory-container"></div>
-            <button class="scroll-btn scroll-right" onclick="scrollRight('videos')">▶</button>
+            <button class="scroll-btn" style="right: 5px;" onclick="scrollRight('videos')">▶</button>
         </div>
 
         <h2>Audio</h2>
         <div style="position: relative;">
-            <button class="scroll-btn scroll-left" onclick="scrollLeft('audio')">◀</button>
+            <button class="scroll-btn" style="left: 5px;" onclick="scrollLeft('audio')">◀</button>
             <div id="audio" class="memory-container"></div>
-            <button class="scroll-btn scroll-right" onclick="scrollRight('audio')">▶</button>
+            <button class="scroll-btn" style="right: 5px;" onclick="scrollRight('audio')">▶</button>
         </div>
     </div>
 
     <script>
         let accessToken = "";
 
+        // Initialize Google API Client
+        function handleClientLoad() {
+            gapi.load("client:auth2", initClient);
+        }
+
+        function initClient() {
+            gapi.client.init({
+                apiKey: 'YOUR_API_KEY',  // Replace with your API key
+                clientId: 'YOUR_CLIENT_ID',  // Replace with your OAuth 2.0 client ID
+                scope: 'https://www.googleapis.com/auth/drive.file',
+            }).then(function () {
+                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+                updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+            });
+        }
+
+        function updateSigninStatus(isSignedIn) {
+            if (isSignedIn) {
+                const user = gapi.auth2.getAuthInstance().currentUser.get();
+                accessToken = user.getAuthResponse().access_token; // Store the access token
+                console.log("Access Token: " + accessToken);
+            } else {
+                gapi.auth2.getAuthInstance().signIn();
+            }
+        }
+
+        // Call this function to initialize the client
+        handleClientLoad();
+
+        // Upload file to Google Drive
         function uploadFile() {
             const fileInput = document.getElementById("fileInput").files[0];
             if (!fileInput) return alert("Please select a file!");
@@ -119,13 +145,9 @@
                 body: formData
             })
             .then(response => response.json())
-            .then(data => { 
-                if (data.id) {
-                    alert('Upload Successful!');
-                    fetchFileList(); 
-                } else {
-                    alert('Upload Failed!');
-                }
+            .then(data => {
+                console.log("File uploaded successfully:", data);
+                fetchFileList(); // Fetch the updated file list after uploading
             })
             .catch(error => {
                 console.error("Upload Error:", error);
@@ -133,6 +155,7 @@
             });
         }
 
+        // Fetch and display files from Google Drive
         function fetchFileList() {
             fetch("https://www.googleapis.com/drive/v3/files", {
                 headers: { "Authorization": "Bearer " + accessToken }
@@ -142,7 +165,7 @@
                 document.getElementById("photos").innerHTML = "";
                 document.getElementById("videos").innerHTML = "";
                 document.getElementById("audio").innerHTML = "";
-
+                
                 data.files.forEach(file => {
                     let fileType = file.name.split('.').pop().toLowerCase();
                     let fileUrl = `https://drive.google.com/uc?id=${file.id}`;
@@ -163,10 +186,10 @@
             .catch(error => console.error("Error Fetching Files:", error));
         }
 
+        // Scroll functions for photo, video, and audio containers
         function scrollLeft(id) {
             document.getElementById(id).scrollBy({ left: -200, behavior: 'smooth' });
         }
-
         function scrollRight(id) {
             document.getElementById(id).scrollBy({ left: 200, behavior: 'smooth' });
         }
