@@ -11,129 +11,139 @@
 
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             text-align: center;
-            background-color: #f4f4f4;
+            background: linear-gradient(135deg, #1e1e2f, #3a3a5f);
+            color: #ffffff;
+            margin: 0;
             padding: 20px;
         }
 
         .container {
-            background: white;
+            width: 80%;
+            max-width: 900px;
+            margin: auto;
+            background: linear-gradient(135deg, #25253a, #2f2f50);
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            display: inline-block;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
         }
 
         .upload-btn {
-            background-color: #4CAF50;
+            background: linear-gradient(45deg, #ff9800, #ff5722);
             color: white;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
         }
 
-        #preview a {
-            display: block;
-            margin-top: 10px;
-            color: #007BFF;
-            text-decoration: none;
+        .memory-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding: 10px;
+            background: linear-gradient(90deg, #3b3b6b, #2d2d4a);
+            border-radius: 8px;
+            scroll-behavior: smooth;
+            position: relative;
+        }
+
+        .memory-container img, .memory-container video, .memory-container audio {
+            max-height: 150px;
+            border-radius: 8px;
+        }
+
+        .scroll-btn {
+            background: linear-gradient(45deg, #ff9800, #ff5722);
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Upload Your Memory!</h1>
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Add Memory</button>
+        <input type="file" id="fileInput" style="display: none;" onchange="uploadFile()">
 
-        <!-- Google Sign-In Button -->
-        <div id="g_id_onload"
-            data-client_id= 584324002833-0usenajkp6l70gl72hm72pag4r0mbm0b.apps.googleusercontent.com
-            data-callback="handleCredentialResponse">
-        </div>
-        <div class="g_id_signin" data-type="standard"></div>
-
-        <br><br>
-
-        <div id="upload-section" style="display: none;">
-            <input type="file" id="fileInput">
-            <button class="upload-btn" onclick="uploadFile()">Upload Memory</button>
+        <h2>Photos</h2>
+        <div style="position: relative;">
+            <button class="scroll-btn" style="left: 5px;" onclick="scrollLeft('photos')">◀</button>
+            <div id="photos" class="memory-container"></div>
+            <button class="scroll-btn" style="right: 5px;" onclick="scrollRight('photos')">▶</button>
         </div>
 
-        <h2>Your Memories</h2>
-        <div id="preview"></div>
+        <h2>Videos</h2>
+        <div style="position: relative;">
+            <button class="scroll-btn" style="left: 5px;" onclick="scrollLeft('videos')">◀</button>
+            <div id="videos" class="memory-container"></div>
+            <button class="scroll-btn" style="right: 5px;" onclick="scrollRight('videos')">▶</button>
+        </div>
+
+        <h2>Audio</h2>
+        <div style="position: relative;">
+            <button class="scroll-btn" style="left: 5px;" onclick="scrollLeft('audio')">◀</button>
+            <div id="audio" class="memory-container"></div>
+            <button class="scroll-btn" style="right: 5px;" onclick="scrollRight('audio')">▶</button>
+        </div>
     </div>
 
     <script>
         let accessToken = "";
 
-        function handleCredentialResponse(response) {
-            console.log("Google Token:", response.credential);
-            authenticateWithGoogle(response.credential);
-        }
-
-        function authenticateWithGoogle(token) {
-            fetch("https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=" + token)
-            .then(response => response.json())
-            .then(data => {
-                console.log("User Info:", data);
-                document.getElementById("upload-section").style.display = "block";
-
-                // Get Access Token
-                gapi.load("auth2", () => {
-                    gapi.auth2.init().then(() => {
-                        gapi.auth2.getAuthInstance().signIn().then(googleUser => {
-                            accessToken = googleUser.getAuthResponse().access_token;
-                            fetchFileList(); // Load files on sign-in
-                        });
-                    });
-                });
-            })
-            .catch(error => console.error("Error authenticating:", error));
-        }
-
         function uploadFile() {
             const fileInput = document.getElementById("fileInput").files[0];
-            if (!fileInput) {
-                alert("Please select a file!");
-                return;
-            }
+            if (!fileInput) return alert("Please select a file!");
 
-            const metadata = {
-                name: fileInput.name,
-                mimeType: fileInput.type
-            };
-
+            const metadata = { name: fileInput.name, mimeType: fileInput.type };
             const formData = new FormData();
             formData.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
             formData.append("file", fileInput);
 
             fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
                 method: "POST",
-                headers: new Headers({ "Authorization": "Bearer " + accessToken }),
+                headers: { "Authorization": "Bearer " + accessToken },
                 body: formData
             })
             .then(response => response.json())
-            .then(data => {
-                console.log("File Uploaded:", data);
-                fetchFileList(); // Reload file list
-            })
+            .then(data => { fetchFileList(); })
             .catch(error => console.error("Upload Error:", error));
         }
 
         function fetchFileList() {
             fetch("https://www.googleapis.com/drive/v3/files", {
-                headers: new Headers({ "Authorization": "Bearer " + accessToken })
+                headers: { "Authorization": "Bearer " + accessToken }
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById("preview").innerHTML = "";
+                document.getElementById("photos").innerHTML = "";
+                document.getElementById("videos").innerHTML = "";
+                document.getElementById("audio").innerHTML = "";
+                
                 data.files.forEach(file => {
-                    let fileLink = document.createElement("a");
-                    fileLink.href = `https://drive.google.com/uc?id=${file.id}`;
-                    fileLink.textContent = file.name;
-                    fileLink.target = "_blank";
-                    document.getElementById("preview").appendChild(fileLink);
+                    let fileType = file.name.split('.').pop().toLowerCase();
+                    let fileUrl = `https://drive.google.com/uc?id=${file.id}`;
+                    let element;
+                    
+                    if (["png", "jpg", "jpeg", "gif"].includes(fileType)) {
+                        element = `<img src="${fileUrl}" alt="Memory">`;
+                        document.getElementById("photos").innerHTML += element;
+                    } else if (["mp4", "webm", "ogg"].includes(fileType)) {
+                        element = `<video src="${fileUrl}" controls></video>`;
+                        document.getElementById("videos").innerHTML += element;
+                    } else if (["mp3", "wav", "ogg"].includes(fileType)) {
+                        element = `<audio src="${fileUrl}" controls></audio>`;
+                        document.getElementById("audio").innerHTML += element;
+                    }
                 });
             })
             .catch(error => console.error("Error Fetching Files:", error));
