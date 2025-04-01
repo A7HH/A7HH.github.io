@@ -3,19 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Your Memory</title>
+    <title>Memory Storage</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Upload Your Memory</h1>
-    <form id="upload-form" enctype="multipart/form-data">
-        <label for="memory-file">Choose a file:</label>
-        <input type="file" id="memory-file" name="file" accept="image/*,video/*,audio/*,.txt,.pdf" required>
-        <button type="submit">Upload Memory</button>
-    </form>
+    <header>
+        <h1>Welcome to Our Memory Storage!</h1>
+    </header>
+    
+    <section id="upload-form">
+        <h2>Upload a Memory</h2>
+        <form id="memory-upload">
+            <input type="file" id="memory-file" required>
+            <textarea id="memory-note" placeholder="Write a note about this memory" required></textarea>
+            <button type="submit">Upload</button>
+        </form>
+    </section>
 
-    <p id="status"></p>
+    <section id="memory-gallery">
+        <h2>Your Memories</h2>
+        <div id="memories-container"></div>
+    </section>
 
-    <script src="upload.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
